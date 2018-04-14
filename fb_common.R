@@ -1,16 +1,22 @@
-#Sys.setlocale("LC_ALL", "Ukrainian")
+Sys.setlocale("LC_ALL", "Ukrainian")
 
 options(warn = -1)
+
+package.list <- c("RSelenium", "dplyr", "httr", "purrr", "rvest", "stringr", "RPostgres")
+
+for(i in package.list) {
+  if (!require(i)) install.packages(i)
+}
+
 
 suppressPackageStartupMessages({
   require(RSelenium)
   require(dplyr)
   require(httr)
   require(purrr)
-  require(readr)
   require(rvest)
   require(stringr)
-  require(openxlsx)
+  require(RPostgres)
 })
 source("https://raw.githubusercontent.com/RomanKyrychenko/exzekutor/master/persons")
 
@@ -162,8 +168,6 @@ get_count <- function(userlink) {
   data_frame(user, userlink, subscribers)
 }
 
-require(purrr)
-require(RPostgres)
 psconnect <- safely(DBI::dbConnect)
 
 connect_sql <- function() {
