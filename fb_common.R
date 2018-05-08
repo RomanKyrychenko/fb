@@ -4,27 +4,31 @@ options(warn = -1)
 
 package.list <- c("RSelenium", "dplyr", "httr", "purrr", "rvest", "stringr", "RPostgres")
 
-for(i in package.list) {
-  if (!require(i)) install.packages(i)
-}
-
+#for(i in package.list) {
+#  if (!require(i)) install.packages(i)
+#}
 
 suppressPackageStartupMessages({
+  require(methods)
   require(RSelenium)
   require(dplyr)
   require(httr)
   require(purrr)
   require(rvest)
+  require(readr)
   require(stringr)
   require(RPostgres)
+  require(R.utils)
 })
-source("https://raw.githubusercontent.com/RomanKyrychenko/exzekutor/master/persons")
 
-fb_login <- function(id = "+380935855724") {
+download.file(url = "https://github.com/RomanKyrychenko/fb/raw/master/persons.rds", destfile = "persons.rds")
+persons <- readRDS("persons.rds")
+
+fb_login <- function(id = "+380935855724", passw = "v1579~v1363_09") {
   user <- remDr$findElement(using = "id", "email")
   user$sendKeysToElement(list(id))
   pass <- remDr$findElement(using = "id", value = "pass")
-  pass$sendKeysToElement(list("leo19K17"))
+  pass$sendKeysToElement(list(passw))
   login <- remDr$findElement(using = "css selector", value = ".uiButton.uiButtonConfirm")
   login$clickElement()
 }
@@ -32,6 +36,12 @@ fb_login <- function(id = "+380935855724") {
 alerts_facebook <- function(fb_page, .pb = NULL) {
   if ((!is.null(.pb)) && inherits(.pb, "Progress") && (.pb$i < .pb$n)) .pb$tick()$print()
   remDr$navigate(fb_page)
+  for (i in 1:15) {
+    webElem <- remDr$findElement("css", "body")
+    Sys.sleep(runif(1,0.1,2))
+    webElem$sendKeysToElement(list(key = "end"))
+  }
+  Sys.sleep(runif(1,15,25))
   page <- remDr$getPageSource()[[1]]
   new_post <- (page %>% read_html() %>% html_nodes(css = "._5pcq") %>% html_attr("href")) %>% unlist() %>% unname()
   ifelse(stringr::str_detect(new_post, "https://www.facebook.com"), new_post, paste0("https://www.facebook.com", new_post))
@@ -49,6 +59,7 @@ exezekutor <- purrr::safely(exezekutor)
 
 get_post_info <- function(post_link) {
   remDr$navigate(post_link)
+  Sys.sleep(runif(1,15,30))
   ps <- read_html(remDr$getPageSource()[[1]])
   photos <- NULL
   post <- NULL
@@ -213,9 +224,25 @@ query <- function(con) {
 wt <- safely(RPostgres::dbWriteTable)
 
 wtable <- function(con){
+  con <- connect_sql()
   res <- wt(con, "fb", request, append = T)
   while(is.null(res$result)) {
-    if(check_sql(con)) con <- connect_sql()
+    con <- connect_sql()
     res <- wt(con, "fb", request, append = T)
   }
 }
+
+
+interruptor = function(FUN,args, time.limit, ALTFUN){
+  results <- NULL
+  results <- withTimeout({FUN(args)},timeout=time.limit,onTimeout="silent")
+  if(is.null(results)){
+    results <- ALTFUN(args)
+  }
+  return(results)
+}   
+
+post <- 0
+
+#withTimeout({table(5)},timeout=5,onTimeout="silent")
+

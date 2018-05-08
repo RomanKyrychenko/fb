@@ -3,16 +3,16 @@ setwd("~/fb/")
 source("fb_common.R")
 
 #remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4446L, browserName = "firefox")
-remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4446L, browserName = "firefox")
+remDr <- remoteDriver(remoteServerAddr = "localhost", port = 4447L, browserName = "firefox")
 remDr$open(silent = T)
 remDr$navigate("http://www.facebook.com")
 
-fb_login(id = "melnykeo94@gmail.com", pass = "new_post[!new_post")
+fb_login(id = "+380631725580", pass = "8938006230")
 
 for (i in 1:50000) {
   tryCatch({
     if(check_sql(con)) con <- connect_sql()
-    jj <- exezekutor(persons[185:369])$result #205
+    jj <- exezekutor(persons[370:554])$result #205
     jj <- jj[!is.na(jj)]
     new_post <- unique(jj[!str_detect(jj, "l.facebook.com")])
     con <- connect_sql()
